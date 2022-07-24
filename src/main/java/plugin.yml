@@ -1,0 +1,9 @@
+name: TrainCartsDriver
+main: com.sketchtown.bukkit.tcdriver.TCDriver
+api-version: 1.13
+version: ${project.version}
+authors: [bergerkiller, sketchtown]
+description: Add-on for TrainCarts that allows players to drive a train
+depend: [Train_Carts]
+metrics: true
+dev-url: ${project.url}
