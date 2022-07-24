@@ -15,6 +15,9 @@ public class TCDriverCommands {
     public void enable(TCDriver plugin) {
         cloud.enable(plugin);
         
+        cloud.getParser().registerBuilderModifier(CommandRequiresDrivePermission.class,
+                (perm, builder) -> builder.permission(plugin::hasUsePermission));
+        
         // All commands that require a Player
         cloud.annotations(new PlayerCommands());
 

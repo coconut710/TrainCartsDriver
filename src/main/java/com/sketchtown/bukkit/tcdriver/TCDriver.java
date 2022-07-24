@@ -1,22 +1,22 @@
 package com.sketchtown.bukkit.tcdriver;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.bergerkiller.bukkit.common.Common;
 import com.bergerkiller.bukkit.common.PluginBase;
 import com.bergerkiller.bukkit.common.Task;
 import com.bergerkiller.bukkit.common.config.FileConfiguration;
+import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.sketchtown.bukkit.tcdriver.commands.TCDriverCommands;
 
 public class TCDriver extends PluginBase {
-    private final Map<Player, Driver> driversList = new HashMap<Player, Driver>();
-    private final List<DriveableTrain> trainList = new ArrayList<DriveableTrain>();
+    private Map<Player, Driver> driversList = new HashMap<Player, Driver>();
+    private Map<MinecartGroup, DriveableTrain> trainList = new HashMap<MinecartGroup, DriveableTrain>();
     private Task updateDriveableTrainTask;
 	
 	private TCDriverCommands commands;
@@ -24,16 +24,14 @@ public class TCDriver extends PluginBase {
 
     @Override
     public void onLoad() {
-        this.getLogger().log(Level.INFO, "Loading TrainCartsDriver");
-        FileConfiguration config = new FileConfiguration(this, "");
+        FileConfiguration config = new FileConfiguration(this, "driveabletrain");
         config.load();
         config.save();
     }
 
 	@Override
 	public int getMinimumLibVersion() {
-		// TODO Auto-generated method stub
-		return 0;
+		return Common.VERSION;
 	}
 
 	@Override
@@ -41,23 +39,79 @@ public class TCDriver extends PluginBase {
         this.listener.enable();
 		this.commands = new TCDriverCommands();
         this.commands.enable(this);
-		
-        this.getLogger().log(Level.INFO, "Enabling TrainCartsDriver");
+        this.updateDriveableTrainTask = (new UpdateDriveableTrainTask()).start(1, 1);
 	}
 
 	@Override
 	public void disable() {
         this.driversList.clear();
+        this.trainList.clear();
 		this.listener.disable();
         Task.stop(this.updateDriveableTrainTask);
-        
-        this.getLogger().log(Level.INFO, "Disabling TrainCartsDriver");
 	}
 
 	@Override
 	public boolean command(CommandSender sender, String command, String[] args) {
-		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean trainIsDriving(MinecartGroup group) {
 		return false;
 	}
 	
+	private class UpdateDriveableTrainTask extends Task {
+        public UpdateDriveableTrainTask() {
+            super(TCDriver.this);
+        }
+
+        @Override
+        public void run() {
+            synchronized (TCDriver.this) {
+                Iterator<DriveableTrain> iter = trainList.values().iterator();
+                while (iter.hasNext()) {
+                	DriveableTrain state = iter.next();
+                    if (!state.getGroup().isRemoved()) {
+                        iter.remove();
+                    } else {
+                        state.update();
+                    }
+                }
+            }
+        }
+    }
+
+	public DriveableTrain getDriveableTrain(MinecartGroup group) {
+		return trainList.get(group);
+	}
+
+	public boolean isDriver(Player player) {
+		return driversList.containsKey(player);
+	}
+
+	public Driver getDriver(Player Player) {
+		return driversList.getOrDefault(Player, null);
+	}
+
+	public void removeDriver(Player player) {
+		driversList.remove(player);
+	}
+
+	public DriveableTrain addDriveableTrain(MinecartGroup group) {
+		DriveableTrain driveable = new DriveableTrain(this, group);
+		trainList.replace(group, driveable);
+		return driveable;
+	}
+
+	public Driver setDriver(Player player) {
+		Driver driver = new Driver(player);
+		driversList.replace(player, driver);
+		return driver;
+	}
+	
+	public boolean hasUsePermission(CommandSender sender) {
+        if (!TCDriverPermissions.DRIVE.has(sender)) {
+            return false;
+        }
+        return true;
+    }
 }
