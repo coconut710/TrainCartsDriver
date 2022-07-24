@@ -13,21 +13,35 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.number>NO-CI</project.build.number>
-        <project.serverversion>1.15.2-R0.1-SNAPSHOT</project.serverversion>
+        <project.serverversion>1.13.2-R0.1-SNAPSHOT</project.serverversion>
         <project.bkcversion>1.19-v2-SNAPSHOT</project.bkcversion>
         <project.tcversion>1.19-v3-SNAPSHOT</project.tcversion>
         <junit.version>4.12</junit.version>
         <project.preloaderversion>1.6</project.preloaderversion>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>env.BUILD_NUMBER</name>
+                </property>
+            </activation>
+            <properties>
+                <project.build.number>${env.BUILD_NUMBER}</project.build.number>
+            </properties>
+        </profile>
+    </profiles>
+
     <repositories>
-        <!-- Repo for access to Bukkit -->
+        <!-- Repo for access to CraftBukkit -->
         <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
+          <id>spigot-repo</id>
+          <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
 
-        <!-- Repo for access to BKCommonLib, TrainCarts -->
+        <!-- Repo for access to BKCommonLib, MyWorlds, SignLink -->
         <repository>
             <id>MG-Dev Jenkins CI Maven Repository</id>
             <url>https://ci.mg-dev.eu/plugin/repository/everything</url>
@@ -36,9 +50,15 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
             <version>${project.serverversion}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -48,15 +68,44 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.bergerkiller.bukkit.preloader</groupId>
+            <artifactId>PluginPreloader</artifactId>
+            <version>${project.preloaderversion}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>com.bergerkiller.bukkit</groupId>
             <artifactId>TrainCarts</artifactId>
             <version>${project.tcversion}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- PlotSquared v4 API (DEPRECATED) -->
+
+        <!-- PlotSquared v5 API -->
+
+        <!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
+
+        <!-- Test engine -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
             <version>3.8.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- The full server jar is only used during test; it should not be exposed as a dependency -->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot</artifactId>
+            <version>${project.serverversion}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -91,31 +140,34 @@
                     <relocations>
                         <relocation>
                             <pattern>com.bergerkiller.bukkit.preloader</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.tcdriver</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>org.apache.commons</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.tcdriver.dep.org.apache.commons</shadedPattern>
+                            <shadedPattern>com.bergerkiller.bukkit.tc</shadedPattern>
                         </relocation>
 
                         <!-- BKCommonLib relocations of Cloud command framework -->
                         <relocation>
                             <pattern>cloud.commandframework</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.common.dep.cloud</shadedPattern>
+                            <shadedPattern>com.bergerkiller.bukkit.common.dep.cloud</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>io.leangen.geantyref</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.common.dep.typetoken</shadedPattern>
+                            <shadedPattern>com.bergerkiller.bukkit.common.dep.typetoken</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>me.lucko.commodore</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.common.dep.me.lucko.commodore</shadedPattern>
+                            <shadedPattern>com.bergerkiller.bukkit.common.dep.me.lucko.commodore</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>net.kyori</pattern>
-                            <shadedPattern>com.sketchtown.bukkit.common.dep.net.kyori</shadedPattern>
+                            <shadedPattern>com.bergerkiller.bukkit.common.dep.net.kyori</shadedPattern>
                         </relocation>
                     </relocations>
+                    <artifactSet>
+                        <includes>
+                            <include>com.opencsv</include>
+                            <include>org.apache.commons</include>
+                            <include>com.sketchtown.bukkit.preloader</include>
+                        </includes>
+                    </artifactSet>
                 </configuration>
                 <executions>
                     <execution>
