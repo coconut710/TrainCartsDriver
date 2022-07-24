@@ -20,14 +20,12 @@ import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
-import net.md_5.bungee.api.ChatMessageType;
 
 public class DriveableTrain {
 	private TCDriver plugin;
 	private MinecartGroup group;
 	
 	private Driver driver;
-	private MinecartMember locomotive;
 	private int notch;
 	private EnumDriveState driveState;
 	private EnumControlType controlType;
@@ -52,7 +50,6 @@ public class DriveableTrain {
 		this.group = group;
 		
 	    this.driver = null;//about player
-	    this.locomotive = null;//about player
 	    this.notch = 0;
 		this.driveState = EnumDriveState.STOP;
 		this.controlType = EnumControlType.AUTO;
@@ -325,7 +322,7 @@ public class DriveableTrain {
 		} else {
 			acceleration = notch * power;
 		}
-		group.getWorld().playSound(driver.getPlayer().getLocation(), Sound.BLOCK_NOTE_SNARE, 100.0f, 2.0f);
+		group.getWorld().playSound(driver.getPlayer().getLocation(), Sound.BLOCK_NOTE_BLOCK_SNARE, 100.0f, 2.0f);
 		if (notch > 0) {
 			sendTitle(String.format("[역행%d]", notch));
 		}
