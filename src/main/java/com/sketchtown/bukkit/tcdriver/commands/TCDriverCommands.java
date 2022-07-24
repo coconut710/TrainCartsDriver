@@ -4,7 +4,6 @@ import java.util.Collections;
 
 import com.bergerkiller.bukkit.common.cloud.CloudSimpleHandler;
 import com.sketchtown.bukkit.tcdriver.TCDriver;
-import com.sketchtown.bukkit.tcdriver.commands.annotations.CommandRequiresTCCPermission;
 
 public class TCDriverCommands {
 	private final CloudSimpleHandler cloud = new CloudSimpleHandler();
