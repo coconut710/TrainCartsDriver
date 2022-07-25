@@ -73,6 +73,7 @@ public class Driver {
 		member = null;
 		if (driveable != null) {
 			driveable.hideBossBars(player);
+			driveable.removeDriver();
 			this.driveable = null;
 		}
 	}

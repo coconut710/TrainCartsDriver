@@ -378,4 +378,7 @@ public class DriveableTrain {
 			stationbar.removePlayer(player);
 		}
 	}
+	public void removeDriver() {
+		driver = null;
+	}
 }
