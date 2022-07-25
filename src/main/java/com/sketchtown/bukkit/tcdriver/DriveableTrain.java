@@ -61,8 +61,8 @@ public class DriveableTrain {
 	    this.rdoor = false;
 	    
 	    this.bossbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
-	    this.signalbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
-	    this.stationbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
+	    this.signalbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SOLID);
+	    this.stationbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SOLID);
 
 	    this.hasTargetStation = false;
 	    this.targetStation = new Location(group.getWorld(), 0, 0, 0);
@@ -83,7 +83,7 @@ public class DriveableTrain {
 			Vector inputVector = driver.getInputVector();
 			if (this.controlType == EnumControlType.MANU) {
 				BlockFace face = Util.vecToFace(inputVector, true);
-				BlockFace trainFace = driver.getMember().getDirection();
+				BlockFace trainFace = driver.getMember().getDirectionTo();
 				if (face.getOppositeFace() == trainFace) {
 					reverse = true;
 				}
@@ -207,7 +207,7 @@ public class DriveableTrain {
 		}
 		if (tick % (v!=0 ? Math.round(20/v) : 10000) == 0 || (tick + 5) % (v!=0 ? Math.round(20/v) : 10000) == 0) {
 	    	for (MinecartMember<?> member : group) {
-	    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_METAL_STEP, 0.2f, 1.5f);
+	    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_METAL_STEP, 1.0f, 1.5f);
 	    	}
 		}
 	}
@@ -250,8 +250,9 @@ public class DriveableTrain {
 	private void sendTitle(String string) {
 		if (driver == null) {
 			return;
+		} else {
+			driver.getPlayer().sendTitle(" ", string, 0, 70, 20);
 		}
-		driver.getPlayer().sendTitle("", string, 0, 70, 20);
 	}
 	
 	public void toggleDoor(boolean left, boolean right) {
