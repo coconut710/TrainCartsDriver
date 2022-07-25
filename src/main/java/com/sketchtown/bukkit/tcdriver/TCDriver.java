@@ -86,18 +86,19 @@ public class TCDriver extends PluginBase {
         public UpdateDriveableTrainTask() {
             super(TCDriver.this);
         }
-
+        public int tick = 0;
         @Override
         public void run() {
+        	tick++;
         	synchronized (TCDriver.this) {
                 Iterator<DriveableTrain> iter = trainList.values().iterator();
                 while (iter.hasNext()) {
                 	DriveableTrain driveable = iter.next();
                     if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
-                    	driveable.getDriver().clearMember();
+                    	driveable.clearMember();
                         iter.remove();
                     } else {
-                    	driveable.update();
+                    	driveable.update(tick);
                     }
                 }
             }
@@ -132,9 +133,12 @@ public class TCDriver extends PluginBase {
 		return driveable;
 	}
 
-	public Driver setDriver(Player player) {
+	public Driver addDriver(Player player) {
+		if (isDriver(player)) {
+			return getDriver(player);
+		}
 		Driver driver = new Driver(player);
-		driversList.replace(player, driver);
+		driversList.put(player, driver);
 		return driver;
 	}
 	

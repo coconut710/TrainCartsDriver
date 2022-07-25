@@ -2,6 +2,7 @@ package com.sketchtown.bukkit.tcdriver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -72,14 +73,10 @@ public class DriveableTrain {
 	public MinecartGroup getGroup() {
 		return group;
 	}
-	public void setDriver(Driver driver) {
-		this.driver = driver;
-		driver.updateMember(this);
-	}
 	public Driver getDriver() {
 		return this.driver;
 	}
-	public void update() {
+	public void update(int tick) {
 		boolean reverse = false;
 		//calculate player input
 		if (driver != null && driver.getMember() != null) {
@@ -91,18 +88,17 @@ public class DriveableTrain {
 					reverse = true;
 				}
 			}
-			Bukkit.getLogger().info(inputVector.toString());
 			if (!driver.isPressing() && inputVector.lengthSquared() != 0) {
 				switch (this.controlType) {
 				case MANU:
-					if (inputVector.getX() >= 0.5) {
+					if (inputVector.getZ() >= 0.5) {
 						this.addNotch(-1);
-					} else if (inputVector.getX() <= -0.5) {
+					} else if (inputVector.getZ() <= -0.5) {
 						this.addNotch(1);
 					}
 					break;
 				case SEMI:
-					if (inputVector.getX() >= 0.5) {
+					if (inputVector.getY() >= 0.5) {
 						//this.launch();
 					}
 					break;
@@ -110,9 +106,9 @@ public class DriveableTrain {
 				default:
 					break;
 				}
-				if (inputVector.getZ() >= 0.5) {//A
+				if (inputVector.getX() >= 0.5) {//A
 					toggleDoor(true, false);
-				} else if (inputVector.getZ() <= -0.5) {//D
+				} else if (inputVector.getX() <= -0.5) {//D
 					toggleDoor(false, true);
 				}
 				driver.setPressing(true);
@@ -145,12 +141,12 @@ public class DriveableTrain {
 			}
 			group.setForwardForce(v + (acceleration * speedRatio));
 		}
-		if (notch <= 0) {
-			if (v + acceleration < 0 && driveState != EnumDriveState.STOP) {
+		if (notch <= 0 && driveState != EnumDriveState.STOP) {
+			if (v + acceleration < 0) {
 				group.setForwardForce(0);
 				driveState = EnumDriveState.STOP;
 		    	for (MinecartMember<?> member : group) {
-		    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 2.0f);
+		    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
 		    	}
 			} else {
 				group.setForwardForce(v + acceleration);
@@ -204,7 +200,16 @@ public class DriveableTrain {
 		}
 		String bossbarString = "출입문 : " + doorString + ChatColor.RESET + " || " + notchString + ChatColor.RESET + " || 속력 : " + ChatColor.BOLD + Math.round(group.getAverageForce() * 100) + ChatColor.RESET +  "/" + Math.round(group.getProperties().getSpeedLimit() * 100) + "km/h";
 		setBossBar(bossbarString, (float) Math.max(0, Math.min(1.0d, group.getAverageForce() / group.getProperties().getSpeedLimit())));
-		
+		if (tick % 2 == 0) {
+	    	for (MinecartMember<?> member : group) {
+	    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_NOTE_BLOCK_DIDGERIDOO, 0.5f, (float) (0.5f + (c!=0 ? (v/c) : 0)));
+	    	}
+		}
+		if (tick % (v!=0 ? Math.round(20/v) : 10000) == 0 || (tick + 5) % (v!=0 ? Math.round(20/v) : 10000) == 0) {
+	    	for (MinecartMember<?> member : group) {
+	    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_METAL_STEP, 0.2f, 1.5f);
+	    	}
+		}
 	}
 
 	private void setBossBar(String string, float f) {
@@ -263,6 +268,9 @@ public class DriveableTrain {
 	}
 	
 	public void closeDoor(boolean left, boolean right) {
+		if (!left && !right) {
+			return;
+		}
 		String directionText = "";
 		if (left) {
 			ldoor = false;
@@ -284,11 +292,14 @@ public class DriveableTrain {
     				player.sendMessage(ChatColor.GREEN + "출입문이 닫힙니다.");
     			}
     		}
-    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 2.0f);
+    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
     	}
 	}
 	
 	public void openDoor(boolean left, boolean right) {
+		if (!left && !right) {
+			return;
+		}
 		String directionText = "";
 		if (left) {
 			ldoor = true;
@@ -309,7 +320,7 @@ public class DriveableTrain {
     				player.sendMessage(ChatColor.GREEN + "출입문이 열립니다.");
     			}
     		}
-    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 2.0f);
+    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
     	}
 	}
 	
@@ -330,7 +341,7 @@ public class DriveableTrain {
 		this.hasTargetStation = false;
 	}
 	public boolean isDriver(Player player) {
-		if (plugin.getDriver(player) == player && driver == player) {
+		if (plugin.getDriver(player) == driver && driver.getPlayer() == player) {
 			return true;
 		}
 		return false;
@@ -360,25 +371,18 @@ public class DriveableTrain {
 	public void setProperties(DriveableTrain driveableTrain) {
 		
 	}
-	public void setDriver(Player player) {
-		if (plugin.isDriver(player)) {
-			this.setDriver(plugin.getDriver(player));
-		} else {
-			plugin.setDriver(player).updateMember(this);
-		}
-	}
-	public void hideBossBars(Player player) {
-		if (bossbar.getPlayers().contains(player)) {
-			bossbar.removePlayer(player);
-		}
-		if (signalbar.getPlayers().contains(player)) {
-			signalbar.removePlayer(player);
-		}
-		if (stationbar.getPlayers().contains(player)) {
-			stationbar.removePlayer(player);
-		}
-	}
 	public void removeDriver() {
 		driver = null;
+	}
+	public void clearMember() {
+		if (getDriver() != null) {
+			getDriver().clearMember();
+		}
+	}
+	public void setDriver(Player player, EnumControlType controlType) {
+		Driver driver = plugin.addDriver(player);
+		this.driver = driver;
+		driver.updateMember(this);
+		this.controlType = controlType;
 	}
 }

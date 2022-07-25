@@ -13,7 +13,6 @@ import org.bukkit.event.vehicle.VehicleExitEvent;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroupStore;
 import com.bergerkiller.bukkit.tc.events.GroupLinkEvent;
-import com.bergerkiller.bukkit.tc.events.GroupRemoveEvent;
 import com.bergerkiller.bukkit.tc.events.SignActionEvent;
 import com.bergerkiller.bukkit.tc.signactions.SignAction;
 import com.bergerkiller.bukkit.tc.signactions.SignActionBlocker;
@@ -81,12 +80,15 @@ public class TCDriverListener implements Listener {
 		} else {
 			return;
 		}
-		driver.clearMember();
+		if (driver.getHandler() == driveable) {
+			driver.clearMember();
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onVehicleEnterEvent(VehicleEnterEvent event) {
 		Entity e = event.getEntered();
+		Entity v = event.getVehicle();
 		if (!(e instanceof Player)) return;
 		Player player = (Player) e;
 		Driver driver;
@@ -97,7 +99,7 @@ public class TCDriverListener implements Listener {
 		} else {
 			return;
 		}
-		group = MinecartGroupStore.get(event.getVehicle());
+		group = MinecartGroupStore.get(v);
 		if (group == null) {
 			return;
 		}
@@ -106,7 +108,7 @@ public class TCDriverListener implements Listener {
 		} else {
 			return;
 		}
-		driver.updateMember(driveable);
+		driver.updateMember(v, driveable);
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
@@ -128,7 +130,7 @@ public class TCDriverListener implements Listener {
 		}
 		SignAction action = SignAction.getSignAction(event);
 		if (action instanceof SignActionStation) {
-			driveable.setTargetStation(event.getSign().getLocation());
+			driveable.setTargetStation(event.getRailLocation());
 			event.setCancelled(true);
 		} else if (action instanceof SignActionWait) {
 			event.setCancelled(true);

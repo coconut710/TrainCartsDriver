@@ -1,5 +1,7 @@
 package com.sketchtown.bukkit.tcdriver;
 
+import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -22,29 +24,35 @@ public class Driver {
 		return driveable;
 	}
 	public Vector getInputVector() {
-		Vector eyeDirection = player.getEyeLocation().getDirection();
+		double eyeX = 	Math.toRadians(player.getEyeLocation().getX());
+		double eyeY = 	Math.toRadians(player.getEyeLocation().getY());
+		double eyeZ = 	Math.toRadians(player.getEyeLocation().getZ());
+		double yaw = 	Math.toRadians(player.getEyeLocation().getYaw());
+		double pitch = 	Math.toRadians(player.getEyeLocation().getPitch());
 		Vector moveDirection = player.getVelocity();
-		
+		moveDirection.subtract(new Vector(0,-0.0784000015258789,0));
 		if (moveDirection.lengthSquared() == 0) {
 			return new Vector(0,0,0);
 		}
 		
-		double X0 = -eyeDirection.getX();
-		double Z0 = -eyeDirection.getZ();
+		double X0=moveDirection.getX();
+		double Y0=moveDirection.getY();
+		double Z0=moveDirection.getZ();
 		
-		double sinp = -eyeDirection.getY();
-		double cosp = Math.sqrt(Math.pow(X0,2) + Math.pow(Z0,2));
-		double siny = Z0/cosp;
-		double cosy = X0/cosp;
+		double siny = -Math.sin(yaw);
+		double cosy = -Math.cos(yaw);
+		double sinp = -Math.sin(pitch);
+		double cosp = -Math.cos(pitch);
 		
-		double X1=moveDirection.getX()*cosy	+moveDirection.getZ()*siny;
-		double Y1=0							+moveDirection.getY();
+		double X1=X0*cosy			+Z0*siny;
+		double Y1=			Y0;
+		double Z1=-X0*siny			+Z0*cosy;
 		
 		double X2=X1*cosp	-Y1*sinp	+0;
 		double Y2=X1*sinp	+Y1*cosp	+0;
-		double Z2=-moveDirection.getX()*siny+moveDirection.getZ()*cosy;
+		double Z2=						+Z1;
 		
-		return new Vector(X2,Y2,Z2).multiply(1/moveDirection.length());
+		return new Vector(X2,Y2,Z2).normalize();
 	}
 	public boolean isPressing() {
 		return pressing;
@@ -54,6 +62,20 @@ public class Driver {
 	}
 	public MinecartMember<?> getMember() {
 		return member;
+	}
+	public void updateMember(Entity cartEntity, DriveableTrain driveable) {
+		MinecartGroup group = driveable.getGroup();
+		if (group.head().getEntity().getEntity() == cartEntity) {
+			member = group.head();
+			driveable.showBossBars(player);
+			this.driveable = driveable;
+		} else if (group.head().getEntity().getEntity() == cartEntity) {
+			member = group.tail();
+			driveable.showBossBars(player);
+			this.driveable = driveable;
+		} else {
+			clearMember();
+		}
 	}
 	public void updateMember(DriveableTrain driveable) {
 		MinecartGroup group = driveable.getGroup();
@@ -72,7 +94,7 @@ public class Driver {
 	public void clearMember() {
 		member = null;
 		if (driveable != null) {
-			driveable.hideBossBars(player);
+			driveable.clearBossBars();
 			driveable.removeDriver();
 			this.driveable = null;
 		}
