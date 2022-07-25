@@ -5,6 +5,8 @@ import org.bukkit.entity.Player;
 
 import com.bergerkiller.bukkit.tc.commands.annotations.CommandTargetTrain;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
+import com.bergerkiller.bukkit.tc.controller.MinecartGroupStore;
+import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 import com.bergerkiller.bukkit.tc.properties.TrainProperties;
 import com.sketchtown.bukkit.tcdriver.TCDriver;
 
@@ -13,20 +15,21 @@ import cloud.commandframework.annotations.CommandMethod;
 
 @CommandMethod("tcdriver|tcd")
 public class PlayerCommands {
-	@CommandTargetTrain
 	@CommandRequiresDrivePermission
     @CommandMethod("drive")
     @CommandDescription("Make train driveable")
-    public void commandGiveEditorMap(
+    private void commandDrive(
             final Player player,
-            final TrainProperties properties,
             final TCDriver plugin
     ) {
-		MinecartGroup group = properties.getHolder();
-		if (group == null) {
-			player.sendMessage(ChatColor.YELLOW + "the train is a lie");
-		} else {
-	        plugin.addDriveableTrain(group).setDriver(player);
-		}
+		for (MinecartGroup g : MinecartGroupStore.getGroups()) {
+            for (MinecartMember<?> m : g) {
+            	if (m.getEntity().getPlayerPassengers().contains(player)) {
+            		plugin.addDriveableTrain(g).setDriver(player);
+            		return;
+            	}
+            }
+        }
+		player.sendMessage(ChatColor.YELLOW + "the train is a lie");
     }
 }
