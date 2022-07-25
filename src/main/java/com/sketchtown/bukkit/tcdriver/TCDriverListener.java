@@ -13,6 +13,7 @@ import org.bukkit.event.vehicle.VehicleExitEvent;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroupStore;
 import com.bergerkiller.bukkit.tc.events.GroupLinkEvent;
+import com.bergerkiller.bukkit.tc.events.GroupRemoveEvent;
 import com.bergerkiller.bukkit.tc.events.SignActionEvent;
 import com.bergerkiller.bukkit.tc.signactions.SignAction;
 import com.bergerkiller.bukkit.tc.signactions.SignActionBlocker;
@@ -52,6 +53,9 @@ public class TCDriverListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerQuitEvent(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
+		if (plugin.isDriver(player)) {
+			plugin.getDriver(player).clearMember();
+		}
 		plugin.removeDriver(player);
 	}
 	
