@@ -20,7 +20,6 @@ public class TCDriver extends PluginBase {
     private Map<Player, Driver> driversList = new HashMap<Player, Driver>();
     private Map<MinecartGroup, DriveableTrain> trainList = new HashMap<MinecartGroup, DriveableTrain>();
     private Task updateDriveableTrainTask;
-    private Task alarmTask;
 	
 	private TCDriverCommands commands;
 	private final TCDriverListener listener = new TCDriverListener(this);
@@ -43,7 +42,6 @@ public class TCDriver extends PluginBase {
 		this.commands = new TCDriverCommands();
         this.commands.enable(this);
         this.updateDriveableTrainTask = (new UpdateDriveableTrainTask()).start(1, 1);
-        this.alarmTask = (new AlarmTask()).start(20, 20);
 	}
 
 	@Override
@@ -60,7 +58,6 @@ public class TCDriver extends PluginBase {
         this.trainList.clear();
 		this.listener.disable();
         Task.stop(this.updateDriveableTrainTask);
-        Task.stop(this.alarmTask);
 	}
 
 	@Override
@@ -103,16 +100,6 @@ public class TCDriver extends PluginBase {
                     }
                 }
             }
-        }
-    }
-	private class AlarmTask extends Task {
-        public AlarmTask() {
-            super(TCDriver.this);
-        }
-
-        @Override
-        public void run() {
-    		Bukkit.getLogger().info("updating something!");
         }
     }
 
