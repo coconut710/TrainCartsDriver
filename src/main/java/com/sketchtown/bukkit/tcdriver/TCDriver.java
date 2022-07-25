@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -12,12 +13,14 @@ import com.bergerkiller.bukkit.common.PluginBase;
 import com.bergerkiller.bukkit.common.Task;
 import com.bergerkiller.bukkit.common.config.FileConfiguration;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
+import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 import com.sketchtown.bukkit.tcdriver.commands.TCDriverCommands;
 
 public class TCDriver extends PluginBase {
     private Map<Player, Driver> driversList = new HashMap<Player, Driver>();
     private Map<MinecartGroup, DriveableTrain> trainList = new HashMap<MinecartGroup, DriveableTrain>();
     private Task updateDriveableTrainTask;
+    private Task alarmTask;
 	
 	private TCDriverCommands commands;
 	private final TCDriverListener listener = new TCDriverListener(this);
@@ -40,14 +43,24 @@ public class TCDriver extends PluginBase {
 		this.commands = new TCDriverCommands();
         this.commands.enable(this);
         this.updateDriveableTrainTask = (new UpdateDriveableTrainTask()).start(1, 1);
+        this.alarmTask = (new AlarmTask()).start(20, 20);
 	}
 
 	@Override
 	public void disable() {
+        synchronized (TCDriver.this) {
+	        Iterator<DriveableTrain> iter = trainList.values().iterator();
+	        while (iter.hasNext()) {
+	        	DriveableTrain driveable = iter.next();
+	        	driveable.clearBossBars();
+	        }
+        }
+		
         this.driversList.clear();
         this.trainList.clear();
 		this.listener.disable();
         Task.stop(this.updateDriveableTrainTask);
+        Task.stop(this.alarmTask);
 	}
 
 	@Override
@@ -55,8 +68,20 @@ public class TCDriver extends PluginBase {
 		return false;
 	}
 
-	public boolean trainIsDriving(MinecartGroup group) {
-		return false;
+	public boolean isDriveable(MinecartGroup group) {
+		return trainList.containsKey(group);
+	}
+
+	public boolean isDriveable(MinecartMember<?> member) {
+		return trainList.containsKey(member.getGroup());
+	}
+
+	public DriveableTrain getDriveable(MinecartGroup group) {
+		return trainList.get(group);
+	}
+
+	public DriveableTrain getDriveable(MinecartMember<?> member) {
+		return trainList.get(member.getGroup());
 	}
 	
 	private class UpdateDriveableTrainTask extends Task {
@@ -69,14 +94,25 @@ public class TCDriver extends PluginBase {
             synchronized (TCDriver.this) {
                 Iterator<DriveableTrain> iter = trainList.values().iterator();
                 while (iter.hasNext()) {
-                	DriveableTrain state = iter.next();
-                    if (!state.getGroup().isRemoved()) {
+                	DriveableTrain driveable = iter.next();
+                    if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
                         iter.remove();
                     } else {
-                        state.update();
+                    	
+                    	driveable.update();
                     }
                 }
             }
+        }
+    }
+	private class AlarmTask extends Task {
+        public AlarmTask() {
+            super(TCDriver.this);
+        }
+
+        @Override
+        public void run() {
+    		Bukkit.getLogger().info("updating something!");
         }
     }
 
@@ -93,7 +129,10 @@ public class TCDriver extends PluginBase {
 	}
 
 	public void removeDriver(Player player) {
-		driversList.remove(player);
+		if (isDriver(player)) {
+			getDriver(player).clearMember();
+			driversList.remove(player);
+		}
 	}
 
 	public DriveableTrain addDriveableTrain(MinecartGroup group) {
