@@ -12,8 +12,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.number>NO-CI</project.build.number>
-        <project.serverversion>1.13.2-R0.1-SNAPSHOT</project.serverversion>
+        <project.build.number>20220726</project.build.number>
+        <project.serverversion>1.18.2-R0.1-SNAPSHOT</project.serverversion>
         <project.bkcversion>1.19-v2-SNAPSHOT</project.bkcversion>
         <project.tcversion>1.19-v3</project.tcversion>
         <junit.version>4.12</junit.version>
@@ -101,13 +101,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- The full server jar is only used during test; it should not be exposed as a dependency -->
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
-            <version>${project.serverversion}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <!-- Build -->
