@@ -9,6 +9,9 @@ import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -16,10 +19,6 @@ import org.bukkit.util.Vector;
 import com.bergerkiller.bukkit.tc.Util;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.bergerkiller.bukkit.tc.controller.MinecartMember;
-
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.bossbar.BossBar;
-import net.kyori.adventure.text.Component;
 
 public class DriveableTrain {
 	private TCDriver plugin;
@@ -60,9 +59,9 @@ public class DriveableTrain {
 		this.ldoor = false;
 	    this.rdoor = false;
 	    
-	    this.bossbar = null;
-	    this.signalbar = null;
-	    this.stationbar = null;
+	    this.bossbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
+	    this.signalbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
+	    this.stationbar = plugin.getServer().createBossBar("", BarColor.WHITE, BarStyle.SEGMENTED_20);
 
 	    this.hasTargetStation = false;
 	    this.targetStation = new Location(group.getWorld(), 0, 0, 0);
@@ -75,7 +74,7 @@ public class DriveableTrain {
 	}
 	public void setDriver(Driver driver) {
 		this.driver = driver;
-		driver.updateMember(group);
+		driver.updateMember(this);
 	}
 	public Driver getDriver() {
 		return this.driver;
@@ -134,7 +133,7 @@ public class DriveableTrain {
 				if (reverse) {
 					sendTitle("[방향전환]");
 					group.reverse();
-					driver.updateMember(group);
+					driver.updateMember(this);
 					if (driver.getMember() == group.head()) {
 						driveState = EnumDriveState.FORWARD;
 					} else {
@@ -209,13 +208,38 @@ public class DriveableTrain {
 	}
 
 	private void setBossBar(String string, float f) {
-		bossbar = BossBar.bossBar(Component.text(string), f, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_20);
+		if (f>1) f=1;
+		if (f<0) f=0;
+		bossbar.setTitle(string);
+		bossbar.setProgress(f);
 	}
 	private void setSignalBar(String string, float f) {
-		stationbar = BossBar.bossBar(Component.text(string), f, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_20);
+		if (f>1) f=1;
+		if (f<0) f=0;
+		signalbar.setTitle(string);
+		signalbar.setProgress(f);
 	}
 	private void setStationBar(String string, float f) {
-		stationbar = BossBar.bossBar(Component.text(string), f, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_20);
+		if (f>1) f=1;
+		if (f<0) f=0;
+		stationbar.setTitle(string);
+		stationbar.setProgress(f);
+	}
+	public void showBossBars(Player player) {
+		if (!bossbar.getPlayers().contains(player)) {
+			bossbar.addPlayer(player);
+		}
+		if (!signalbar.getPlayers().contains(player)) {
+			signalbar.addPlayer(player);
+		}
+		if (!stationbar.getPlayers().contains(player)) {
+			stationbar.addPlayer(player);
+		}
+	}
+	public void clearBossBars() {
+		bossbar.removeAll();
+		signalbar.removeAll();
+		stationbar.removeAll();
 	}
 	
 	private void sendTitle(String string) {
@@ -340,7 +364,18 @@ public class DriveableTrain {
 		if (plugin.isDriver(player)) {
 			this.setDriver(plugin.getDriver(player));
 		} else {
-			plugin.setDriver(player).updateMember(group);
+			plugin.setDriver(player).updateMember(this);
+		}
+	}
+	public void hideBossBars(Player player) {
+		if (bossbar.getPlayers().contains(player)) {
+			bossbar.removePlayer(player);
+		}
+		if (signalbar.getPlayers().contains(player)) {
+			signalbar.removePlayer(player);
+		}
+		if (stationbar.getPlayers().contains(player)) {
+			stationbar.removePlayer(player);
 		}
 	}
 }
