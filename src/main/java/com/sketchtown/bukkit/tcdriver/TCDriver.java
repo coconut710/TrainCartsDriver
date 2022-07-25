@@ -89,14 +89,16 @@ public class TCDriver extends PluginBase {
 
         @Override
         public void run() {
-            for (Entry<MinecartGroup, DriveableTrain> entry : trainList.entrySet()) {
-            	MinecartGroup group = entry.getKey();
-            	DriveableTrain driveable = entry.getValue();
-            	if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
-            		trainList.remove(group);
-                } else {
-                    Bukkit.getLogger().info("yes");
-                	driveable.update();
+        	synchronized (TCDriver.this) {
+                Iterator<DriveableTrain> iter = trainList.values().iterator();
+                while (iter.hasNext()) {
+                	DriveableTrain driveable = iter.next();
+                    if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
+                    	driveable.getDriver().clearMember();
+                        iter.remove();
+                    } else {
+                    	driveable.update();
+                    }
                 }
             }
         }
@@ -122,8 +124,11 @@ public class TCDriver extends PluginBase {
 	}
 
 	public DriveableTrain addDriveableTrain(MinecartGroup group) {
+		if (isDriveable(group)) {
+			return getDriveable(group);
+		}
 		DriveableTrain driveable = new DriveableTrain(this, group);
-		trainList.replace(group, driveable);
+		trainList.put(group, driveable);
 		return driveable;
 	}
 
