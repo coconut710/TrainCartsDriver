@@ -9,12 +9,17 @@ import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 public class Driver {
 	private final Player player;
 	private MinecartMember<?> member;
+	private DriveableTrain driveable;
 	private boolean pressing;
 	public Driver(Player player) {
 		this.player = player;
+		this.driveable = null;
 	}
 	public Player getPlayer() {
 		return player;
+	}
+	public DriveableTrain getHandler() {
+		return driveable;
 	}
 	public Vector getInputVector() {
 		Vector eyeDirection = player.getEyeLocation().getDirection();
@@ -50,13 +55,25 @@ public class Driver {
 	public MinecartMember<?> getMember() {
 		return member;
 	}
-	public void updateMember(MinecartGroup group) {
+	public void updateMember(DriveableTrain driveable) {
+		MinecartGroup group = driveable.getGroup();
 		if (group.head().getEntity().getPlayerPassengers().contains(this.getPlayer())) {
 			member = group.head();
+			driveable.showBossBars(player);
+			this.driveable = driveable;
 		} else if (group.tail().getEntity().getPlayerPassengers().contains(this.getPlayer())) {
 			member = group.tail();
+			driveable.showBossBars(player);
+			this.driveable = driveable;
 		} else {
-			member = null;
+			clearMember();
+		}
+	}
+	public void clearMember() {
+		member = null;
+		if (driveable != null) {
+			driveable.hideBossBars(player);
+			this.driveable = null;
 		}
 	}
 }
