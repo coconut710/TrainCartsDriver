@@ -65,31 +65,36 @@ public class Driver {
 	}
 	public void updateMember(Entity cartEntity, DriveableTrain driveable) {
 		MinecartGroup group = driveable.getGroup();
-		if (group.head().getEntity().getEntity() == cartEntity) {
-			member = group.head();
-			driveable.showBossBars(player);
-			this.driveable = driveable;
-		} else if (group.head().getEntity().getEntity() == cartEntity) {
-			member = group.tail();
-			driveable.showBossBars(player);
-			this.driveable = driveable;
+		MinecartMember<?> head = group.head();
+		MinecartMember<?> tail = group.tail();
+		if (head.getEntity().getEntity() == cartEntity) {
+			member = head;
+		} else if (tail.getEntity().getEntity() == cartEntity) {
+			member = tail;
 		} else {
 			clearMember();
+			return;
 		}
+		syncTrainAndDriver(driveable, null);
 	}
 	public void updateMember(DriveableTrain driveable) {
 		MinecartGroup group = driveable.getGroup();
 		if (group.head().getEntity().getPlayerPassengers().contains(this.getPlayer())) {
 			member = group.head();
-			driveable.showBossBars(player);
-			this.driveable = driveable;
 		} else if (group.tail().getEntity().getPlayerPassengers().contains(this.getPlayer())) {
 			member = group.tail();
-			driveable.showBossBars(player);
-			this.driveable = driveable;
 		} else {
 			clearMember();
+			return;
 		}
+		syncTrainAndDriver(driveable, null);
+	}
+	public void syncTrainAndDriver(DriveableTrain driveable, EnumControlType controlType) {
+		Driver driver = driveable.getPlugin().addDriver(player);
+		driveable.showBossBars(player);
+		this.driveable = driveable;
+		driveable.setDriver(driver);
+		driveable.setControlType(controlType);
 	}
 	public void clearMember() {
 		member = null;

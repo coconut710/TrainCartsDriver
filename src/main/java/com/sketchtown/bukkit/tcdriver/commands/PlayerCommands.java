@@ -8,6 +8,7 @@ import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroupStore;
 import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 import com.bergerkiller.bukkit.tc.properties.TrainProperties;
+import com.sketchtown.bukkit.tcdriver.DriveableTrain;
 import com.sketchtown.bukkit.tcdriver.EnumControlType;
 import com.sketchtown.bukkit.tcdriver.TCDriver;
 
@@ -26,7 +27,9 @@ public class PlayerCommands {
 		for (MinecartGroup g : MinecartGroupStore.getGroups()) {
             for (MinecartMember<?> m : g) {
             	if (m.getEntity().getPlayerPassengers().contains(player)) {
-            		plugin.addDriveableTrain(g).setDriver(player, EnumControlType.MANU);
+            		DriveableTrain driveable = plugin.addDriveableTrain(g);
+            		plugin.addDriver(player).syncTrainAndDriver(driveable, EnumControlType.MANU);
+            		player.sendMessage(ChatColor.GREEN + "Hello, World!");
             		return;
             	}
             }

@@ -77,23 +77,21 @@ public class DriveableTrain {
 		return this.driver;
 	}
 	public void update(int tick) {
-		boolean reverse = false;
 		//calculate player input
 		if (driver != null && driver.getMember() != null) {
 			Vector inputVector = driver.getInputVector();
-			if (this.controlType == EnumControlType.MANU) {
-				BlockFace face = Util.vecToFace(inputVector, true);
-				BlockFace trainFace = driver.getMember().getDirectionTo();
-				if (face.getOppositeFace() == trainFace) {
-					reverse = true;
-				}
-			}
 			if (!driver.isPressing() && inputVector.lengthSquared() != 0) {
 				switch (this.controlType) {
 				case MANU:
-					if (inputVector.getZ() >= 0.5) {
-						this.addNotch(-1);
-					} else if (inputVector.getZ() <= -0.5) {
+					if (inputVector.getZ() <= -0.5) {
+						if (driveState == EnumDriveState.STOP) {
+							group.reverse();
+							driver.updateMember(this);
+							sendTitle(driver.getMember() == group.tail() ? "[역방향]" : "[순방향]");
+						} else {
+							this.addNotch(-1);
+						}
+					} else if (inputVector.getZ() >= 0.5) {
 						this.addNotch(1);
 					}
 					break;
@@ -106,10 +104,12 @@ public class DriveableTrain {
 				default:
 					break;
 				}
-				if (inputVector.getX() >= 0.5) {//A
-					toggleDoor(true, false);
-				} else if (inputVector.getX() <= -0.5) {//D
-					toggleDoor(false, true);
+				if (driveState == EnumDriveState.STOP) {
+					if (inputVector.getX() >= 0.5) {//A
+						toggleDoor(true, false);
+					} else if (inputVector.getX() <= -0.5) {//D
+						toggleDoor(false, true);
+					}
 				}
 				driver.setPressing(true);
 			}
@@ -125,29 +125,17 @@ public class DriveableTrain {
 			speedRatio = ((2*c)-v)/(2*c);
 		}
 		if (notch > 0) {
-			if (driveState == EnumDriveState.STOP) {
-				if (reverse) {
-					sendTitle("[방향전환]");
-					group.reverse();
-					driver.updateMember(this);
-					if (driver.getMember() == group.head()) {
-						driveState = EnumDriveState.FORWARD;
-					} else {
-						driveState = EnumDriveState.BACKWARD;
-					}
-				} else {
-					driveState = EnumDriveState.FORWARD;
-				}
-			}
 			group.setForwardForce(v + (acceleration * speedRatio));
 		}
 		if (notch <= 0 && driveState != EnumDriveState.STOP) {
 			if (v + acceleration < 0) {
+				notch = 0;
 				group.setForwardForce(0);
 				driveState = EnumDriveState.STOP;
 		    	for (MinecartMember<?> member : group) {
-		    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
+		    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.5f);
 		    	}
+		    	
 			} else {
 				group.setForwardForce(v + acceleration);
 			}
@@ -293,7 +281,7 @@ public class DriveableTrain {
     				player.sendMessage(ChatColor.GREEN + "출입문이 닫힙니다.");
     			}
     		}
-    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
+    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.5f);
     	}
 	}
 	
@@ -321,7 +309,7 @@ public class DriveableTrain {
     				player.sendMessage(ChatColor.GREEN + "출입문이 열립니다.");
     			}
     		}
-    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.0f);
+    		group.getWorld().playSound(member.getEntity().getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 1.5f);
     	}
 	}
 	
@@ -380,10 +368,16 @@ public class DriveableTrain {
 			getDriver().clearMember();
 		}
 	}
-	public void setDriver(Player player, EnumControlType controlType) {
-		Driver driver = plugin.addDriver(player);
-		this.driver = driver;
-		driver.updateMember(this);
+	public TCDriver getPlugin() {
+		return plugin;
+	}
+	public void setDriver(Driver driver) {
+		this.driver=driver;
+	}
+	public void setControlType(EnumControlType controlType) {
+		if (controlType == null) {
+			return;
+		}
 		this.controlType = controlType;
 	}
 }
