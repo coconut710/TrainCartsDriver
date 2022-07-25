@@ -3,6 +3,7 @@ package com.sketchtown.bukkit.tcdriver;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -88,16 +89,14 @@ public class TCDriver extends PluginBase {
 
         @Override
         public void run() {
-            synchronized (TCDriver.this) {
-                Iterator<DriveableTrain> iter = trainList.values().iterator();
-                while (iter.hasNext()) {
-                	DriveableTrain driveable = iter.next();
-                    if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
-                        iter.remove();
-                    } else {
-                    	
-                    	driveable.update();
-                    }
+            for (Entry<MinecartGroup, DriveableTrain> entry : trainList.entrySet()) {
+            	MinecartGroup group = entry.getKey();
+            	DriveableTrain driveable = entry.getValue();
+            	if (driveable.getGroup().isRemoved() || driveable.getGroup() == null || driveable == null) {
+            		trainList.remove(group);
+                } else {
+                    Bukkit.getLogger().info("yes");
+                	driveable.update();
                 }
             }
         }
