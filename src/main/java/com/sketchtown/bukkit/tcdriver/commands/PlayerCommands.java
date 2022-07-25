@@ -8,6 +8,7 @@ import com.bergerkiller.bukkit.tc.controller.MinecartGroup;
 import com.bergerkiller.bukkit.tc.controller.MinecartGroupStore;
 import com.bergerkiller.bukkit.tc.controller.MinecartMember;
 import com.bergerkiller.bukkit.tc.properties.TrainProperties;
+import com.sketchtown.bukkit.tcdriver.EnumControlType;
 import com.sketchtown.bukkit.tcdriver.TCDriver;
 
 import cloud.commandframework.annotations.CommandDescription;
@@ -25,7 +26,7 @@ public class PlayerCommands {
 		for (MinecartGroup g : MinecartGroupStore.getGroups()) {
             for (MinecartMember<?> m : g) {
             	if (m.getEntity().getPlayerPassengers().contains(player)) {
-            		plugin.addDriveableTrain(g).setDriver(player);
+            		plugin.addDriveableTrain(g).setDriver(player, EnumControlType.MANU);
             		return;
             	}
             }
